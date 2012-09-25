@@ -25,6 +25,9 @@ void Scene::Update(Object *object) {
         printf("send [%d, %d:%d]\t ENTER msg to obj [%d, %d:%d]\n",
                 object->id, object->x, object->y,
                 iter->first, iter->second->x, iter->second->y);
+        printf("send [%d, %d:%d]\t ENTER msg to obj [%d, %d:%d]\n",
+                iter->first, iter->second->x, iter->second->y,
+                object->id, object->x, object->y);
     }
     // send MOVE msg
     for (iter = move_set_.begin(); iter != move_set_.end(); ++iter) {
