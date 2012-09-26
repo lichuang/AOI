@@ -20,6 +20,9 @@ private:
         int y;
         int id;
 
+        list<Object *>::iterator x_pos;
+        list<Object *>::iterator y_pos;
+
         Object(int _id, int _x, int _y) 
             : id(_id)
             , x(_x)
@@ -28,15 +31,21 @@ private:
     };
 
 private:
+    typedef map<int, Object *> ObjMap;
+    typedef list<Object *> ObjList;
+
     void Update(Object *object);
+    void GetRangeSet(Object *object, ObjMap *set);
+    void UpdateObjectPosition(Object *object, int x, int y);
 
-    list<Object*> obj_x_list_;
-    list<Object*> obj_y_list_;
-    map<int, Object*> obj_set_;
+private:
+    ObjList obj_x_list_;
+    ObjList obj_y_list_;
+    ObjMap  obj_set_;
 
-    map<int, Object*> move_set_;
-    map<int, Object*> enter_set_;
-    map<int, Object*> leave_set_;
+    ObjMap  move_set_;
+    ObjMap  enter_set_;
+    ObjMap  leave_set_;
 };
 
 #endif  // __SCENE_H__

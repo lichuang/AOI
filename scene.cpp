@@ -9,7 +9,7 @@ Scene::Scene() {
 }
 
 Scene::~Scene() {
-    map<int, Object*>::iterator iter, tmp;
+    ObjMap::iterator iter, tmp;
     for (iter = obj_set_.begin(); iter != obj_set_.end(); ) {
         tmp = iter;
         ++iter;
@@ -18,7 +18,7 @@ Scene::~Scene() {
 }
 
 void Scene::Update(Object *object) {
-    map<int, Object*>::iterator iter;
+    ObjMap::iterator iter;
 
     // send ENTER msg
     for (iter = enter_set_.begin(); iter != enter_set_.end(); ++iter) {
@@ -54,7 +54,7 @@ void Scene::Add(int id, int x, int y) {
     Object *object = new Object(id, x, y);
     obj_set_[object->id] = object;
 
-    list<Object*>::iterator iter, pos;
+    ObjList::iterator iter, pos;
     bool flag;
 
     // iterator x-axis object list
@@ -75,8 +75,10 @@ void Scene::Add(int id, int x, int y) {
     }
     if (flag) {
         obj_x_list_.insert(pos, object);
+        object->x_pos = --pos;
     } else {
         obj_x_list_.push_front(object);
+        object->x_pos = obj_x_list_.begin();
     }
 
     // iterator y-axis object list
@@ -97,84 +99,122 @@ void Scene::Add(int id, int x, int y) {
     }
     if (flag) {
         obj_y_list_.insert(pos, object);
+        object->y_pos = --pos;
     } else {
         obj_y_list_.push_front(object);
+        object->y_pos = obj_y_list_.begin();
     }
     Update(object);
 }
 
+void Scene::UpdateObjectPosition(Object *object, int x, int y) {
+    int old_x = object->x;
+    int old_y = object->y;
+    object->x = x;
+    object->y = y;
+
+    ObjList::iterator iter, pos;
+
+    // find the new x pos
+    if (x > old_x) {
+        if (object->x_pos != obj_x_list_.end()) {
+            iter = object->x_pos;
+            ++iter;
+            obj_x_list_.erase(object->x_pos);
+            while (iter != obj_x_list_.end()) {
+                if (object->x - (*iter)->x < 0) {
+                    pos = iter;
+                    break;
+                }
+                ++iter;
+            }
+            if (iter != obj_x_list_.end()) {
+                obj_x_list_.insert(pos, object);
+            } else {
+                obj_x_list_.push_back(object);
+            }
+        }
+    } else if (x < old_x) {
+        if (object->x_pos != obj_x_list_.begin()) {
+            iter = object->x_pos;
+            --iter;
+            obj_x_list_.erase(object->x_pos);
+            while (iter != obj_x_list_.begin()) {
+                if (object->x - (*iter)->x > 0) {
+                    pos = ++iter;
+                    break;
+                }
+                --iter;
+            }
+            if (iter != obj_x_list_.begin()) {
+                obj_x_list_.insert(pos, object);
+            } else {
+                obj_x_list_.push_front(object);
+            }
+        }
+    }
+
+    // find the new y pos
+    if (y > old_y) {
+        if (object->y_pos != obj_y_list_.end()) {
+            iter = object->y_pos;
+            ++iter;
+            obj_y_list_.erase(object->y_pos);
+            while (iter != obj_y_list_.end()) {
+                if (object->y - (*iter)->y < 0) {
+                    pos = iter;
+                    break;
+                }
+                ++iter;
+            }
+            if (iter != obj_y_list_.end()) {
+                obj_y_list_.insert(pos, object);
+            } else {
+                obj_y_list_.push_back(object);
+            }
+        }
+    } else if (y < old_y) {
+        if (object->y_pos != obj_y_list_.begin()) {
+            iter = object->y_pos;
+            --iter;
+            obj_y_list_.erase(object->y_pos);
+            while (iter != obj_y_list_.begin()) {
+                if (object->y - (*iter)->y > 0) {
+                    pos = ++iter;
+                    break;
+                }
+                --iter;
+            }
+            if (iter != obj_y_list_.begin()) {
+                obj_y_list_.insert(pos, object);
+            } else {
+                obj_y_list_.push_front(object);
+            }
+        }
+    }
+}
+
 void Scene::Move(int id, int x, int y) {
-    map<int, Object*>::iterator obj_iter = obj_set_.find(id);
+    ObjMap::iterator obj_iter = obj_set_.find(id);
     if (obj_iter == obj_set_.end()) {
         return;
     }
     Object *object = obj_iter->second;
 
-    list<Object*>::iterator list_iter;
-    map<int, Object*> old_set, new_set;
+    ObjList::iterator list_iter;
+    ObjMap old_set, new_set;
 
     // get the old set
-    // iterator x-axis object list
-    for (list_iter = obj_x_list_.begin(); list_iter != obj_x_list_.end(); ++list_iter) {
-        if (object->id == (*list_iter)->id) {
-            continue;
-        }
-        int diff = (*list_iter)->x - object->x;
-        if (abs(diff) <= DISTANCE) {
-            old_set[(*list_iter)->id] = *list_iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
-    // iterator y-axis object list
-    for (list_iter = obj_y_list_.begin(); list_iter != obj_y_list_.end(); ++list_iter) {
-        if (object->id == (*list_iter)->id) {
-            continue;
-        }
-        int diff = (*list_iter)->y - object->y;
-        if (abs(diff) <= DISTANCE) {
-            old_set[(*list_iter)->id] = *list_iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
+    GetRangeSet(object, &old_set);
 
     // update object position
-    object->x = x;
-    object->y = y;
+    UpdateObjectPosition(object, x, y);
 
     // get the new set
-    // iterator x-axis object list
-    for (list_iter = obj_x_list_.begin(); list_iter != obj_x_list_.end(); ++list_iter) {
-        if (object->id == (*list_iter)->id) {
-            continue;
-        }
-        int diff = (*list_iter)->x - object->x;
-        if (abs(diff) <= DISTANCE) {
-            new_set[(*list_iter)->id] = *list_iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
-    // iterator y-axis object list
-    for (list_iter = obj_y_list_.begin(); list_iter != obj_y_list_.end(); ++list_iter) {
-        if (object->id == (*list_iter)->id) {
-            continue;
-        }
-        int diff = (*list_iter)->y - object->y;
-        if (abs(diff) <= DISTANCE) {
-            new_set[(*list_iter)->id] = *list_iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
+    GetRangeSet(object, &new_set);
 
     // move_set = old_set MIX new_set
-    map<int, Object*>::iterator iter;
+    ObjMap::iterator iter;
     for (iter = old_set.begin(); iter != old_set.end(); ++iter) {
         if (new_set.find(iter->first) != new_set.end()) {
             move_set_[iter->first] = iter->second;
@@ -198,50 +238,79 @@ void Scene::Move(int id, int x, int y) {
     Update(object);
 }
 
+void Scene::GetRangeSet(Object *object, ObjMap *set) {
+    ObjMap x_set;
+    ObjList::iterator iter;
+
+    // iterator x-axis object list
+    if (object->x_pos != obj_x_list_.end()) {
+        iter = object->x_pos;
+        while (1) {
+            ++iter;
+            if (iter == obj_x_list_.end()) {
+                break;
+            }
+            if (object->x - (*iter)->x > DISTANCE) {
+                break;
+            }
+            x_set[(*iter)->id] = *iter;
+        }
+    }
+    if (object->x_pos != obj_x_list_.begin()) {
+        iter = object->x_pos;
+        while (1) {
+            --iter;
+            if ((*iter)->x - object->x > DISTANCE) {
+                break;
+            }
+            x_set[(*iter)->id] = *iter;
+            if (iter == obj_x_list_.begin()) {
+                break;
+            }
+        }
+    }
+
+    // iterator y-axis object list
+    if (object->y_pos != obj_y_list_.end()) {
+        iter = object->y_pos;
+        while (1) {
+            ++iter;
+            if (iter == obj_y_list_.end()) {
+                break;
+            }
+            if (object->y - (*iter)->y > DISTANCE) {
+                break;
+            }
+            if (x_set.find((*iter)->id) != x_set.end()) {
+                (*set)[(*iter)->id] = *iter;
+            }
+        }
+    }
+    if (object->y_pos != obj_y_list_.begin()) {
+        iter = object->y_pos;
+        while (1) {
+            --iter;
+            if ((*iter)->y - object->y > DISTANCE) {
+                break;
+            }
+            if (x_set.find((*iter)->id) != x_set.end()) {
+                (*set)[(*iter)->id] = *iter;
+            }
+            if (iter == obj_y_list_.begin()) {
+                break;
+            }
+        }
+    }
+}
+
 void Scene::Leave(int id) {
-    map<int, Object*>::iterator obj_iter = obj_set_.find(id);
+    ObjMap::iterator obj_iter = obj_set_.find(id);
     if (obj_iter == obj_set_.end()) {
         return;
     }
     Object *object = obj_iter->second;
-    list<Object*>::iterator iter, pos;
 
-    // iterator x-axis object list
-    for (iter = obj_x_list_.begin(), pos = obj_x_list_.end(); iter != obj_x_list_.end(); ++iter) {
-        if (object->id == (*iter)->id) {
-            pos = iter;
-            continue;
-        }
-        int diff = (*iter)->x - object->x;
-        if (abs(diff) <= DISTANCE) {
-            leave_set_[(*iter)->id] = *iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
-    if (pos != obj_x_list_.end()) {
-        obj_x_list_.erase(pos);
-    }
-
-    // iterator y-axis object list
-    for (iter = obj_y_list_.begin(), pos = obj_y_list_.end(); iter != obj_y_list_.end(); ++iter) {
-        if (object->id == (*iter)->id) {
-            pos = iter;
-            continue;
-        }
-        int diff = (*iter)->y - object->y;
-        if (abs(diff) <= DISTANCE) {
-            leave_set_[(*iter)->id] = *iter;
-        }
-        if (diff > DISTANCE) {
-            break;
-        }
-    }
-    if (pos != obj_y_list_.end()) {
-        obj_y_list_.erase(pos);
-    }
-
+    GetRangeSet(object, &leave_set_);
     Update(object);
 
     obj_set_.erase(object->id);
