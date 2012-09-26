@@ -3,6 +3,8 @@
 #include <map>
 #include <list>
 
+#define DISTANCE 5
+
 using namespace std;
 
 class Scene {
@@ -10,7 +12,7 @@ public:
     Scene();
     ~Scene();
 
-    void Add(int id, int x, int y);
+    void Add(int id, int x, int y, int distance = DISTANCE);
     void Move(int id, int x, int y);
     void Leave(int id);
 
@@ -19,14 +21,16 @@ private:
         int x;
         int y;
         int id;
+        int radius;
 
         list<Object *>::iterator x_pos;
         list<Object *>::iterator y_pos;
 
-        Object(int _id, int _x, int _y) 
+        Object(int _id, int _x, int _y, int _radius) 
             : id(_id)
             , x(_x)
-            , y(_y) {
+            , y(_y)
+            , radius(_radius) {
         }
     };
 

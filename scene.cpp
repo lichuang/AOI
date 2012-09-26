@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "scene.h"
 
-#define DISTANCE 5
 
 Scene::Scene() {
 }
@@ -47,11 +46,11 @@ void Scene::Update(Object *object) {
     leave_set_.clear();
 }
 
-void Scene::Add(int id, int x, int y) {
+void Scene::Add(int id, int x, int y, int distance) {
     if (obj_set_.find(id) != obj_set_.end()) {
         return;
     }
-    Object *object = new Object(id, x, y);
+    Object *object = new Object(id, x, y, distance);
     obj_set_[object->id] = object;
 
     ObjList::iterator iter, pos;
@@ -62,14 +61,14 @@ void Scene::Add(int id, int x, int y) {
     for (iter = obj_x_list_.begin(); iter != obj_x_list_.end(); ++iter) {
         int diff = (*iter)->x - object->x;
         // into the enter set
-        if (abs(diff) <= DISTANCE) {
+        if (abs(diff) <= distance) {
             enter_set_[(*iter)->id] = *iter;
         } 
         if (!flag && diff > 0) {
             pos = iter;
             flag = true;
         }
-        if (diff > DISTANCE) {
+        if (diff > distance) {
             break;
         }
     }
@@ -86,14 +85,14 @@ void Scene::Add(int id, int x, int y) {
     for (iter = obj_y_list_.begin(); iter != obj_y_list_.end(); ++iter) {
         int diff = (*iter)->y - object->y;
         // into the enter set
-        if (abs(diff) <= DISTANCE) {
+        if (abs(diff) <= distance) {
             enter_set_[(*iter)->id] = *iter;
         } 
         if (!flag && diff > 0) {
             pos = iter;
             flag = true;
         }
-        if (diff > DISTANCE) {
+        if (diff > distance) {
             break;
         }
     }
@@ -241,6 +240,7 @@ void Scene::Move(int id, int x, int y) {
 void Scene::GetRangeSet(Object *object, ObjMap *set) {
     ObjMap x_set;
     ObjList::iterator iter;
+    int distance = object->radius;
 
     // iterator x-axis object list
     if (object->x_pos != obj_x_list_.end()) {
@@ -250,7 +250,7 @@ void Scene::GetRangeSet(Object *object, ObjMap *set) {
             if (iter == obj_x_list_.end()) {
                 break;
             }
-            if (object->x - (*iter)->x > DISTANCE) {
+            if (object->x - (*iter)->x > distance) {
                 break;
             }
             x_set[(*iter)->id] = *iter;
@@ -260,7 +260,7 @@ void Scene::GetRangeSet(Object *object, ObjMap *set) {
         iter = object->x_pos;
         while (1) {
             --iter;
-            if ((*iter)->x - object->x > DISTANCE) {
+            if ((*iter)->x - object->x > distance) {
                 break;
             }
             x_set[(*iter)->id] = *iter;
@@ -278,7 +278,7 @@ void Scene::GetRangeSet(Object *object, ObjMap *set) {
             if (iter == obj_y_list_.end()) {
                 break;
             }
-            if (object->y - (*iter)->y > DISTANCE) {
+            if (object->y - (*iter)->y > distance) {
                 break;
             }
             if (x_set.find((*iter)->id) != x_set.end()) {
@@ -290,7 +290,7 @@ void Scene::GetRangeSet(Object *object, ObjMap *set) {
         iter = object->y_pos;
         while (1) {
             --iter;
-            if ((*iter)->y - object->y > DISTANCE) {
+            if ((*iter)->y - object->y > distance) {
                 break;
             }
             if (x_set.find((*iter)->id) != x_set.end()) {
