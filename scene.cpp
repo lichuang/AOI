@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "scene.h"
 
-
 Scene::Scene() {
 }
 
@@ -55,14 +54,15 @@ void Scene::Add(int id, int x, int y, int distance) {
 
     ObjList::iterator iter, pos;
     bool flag;
+    ObjMap x_set;
 
     // iterator x-axis object list
     flag = false;
     for (iter = obj_x_list_.begin(); iter != obj_x_list_.end(); ++iter) {
         int diff = (*iter)->x - object->x;
-        // into the enter set
+        // into the x set
         if (abs(diff) <= distance) {
-            enter_set_[(*iter)->id] = *iter;
+            x_set[(*iter)->id] = *iter;
         } 
         if (!flag && diff > 0) {
             pos = iter;
@@ -85,7 +85,7 @@ void Scene::Add(int id, int x, int y, int distance) {
     for (iter = obj_y_list_.begin(); iter != obj_y_list_.end(); ++iter) {
         int diff = (*iter)->y - object->y;
         // into the enter set
-        if (abs(diff) <= distance) {
+        if (abs(diff) <= distance && x_set.find((*iter)->id) != x_set.end()) {
             enter_set_[(*iter)->id] = *iter;
         } 
         if (!flag && diff > 0) {
@@ -310,9 +310,12 @@ void Scene::Leave(int id) {
     }
     Object *object = obj_iter->second;
 
+    // get the leave set
     GetRangeSet(object, &leave_set_);
     Update(object);
 
+    obj_x_list_.erase(object->x_pos);
+    obj_y_list_.erase(object->y_pos);
     obj_set_.erase(object->id);
     delete object;
 }
