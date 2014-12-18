@@ -129,8 +129,10 @@ void Scene::UpdateObjectPosition(Object *object, int x, int y) {
             }
             if (iter != obj_x_list_.end()) {
                 obj_x_list_.insert(pos, object);
+                object->x_pos = --pos;
             } else {
                 obj_x_list_.push_back(object);
+                object->x_pos = --obj_x_list_.end();
             }
         }
     } else if (x < old_x) {
@@ -147,8 +149,10 @@ void Scene::UpdateObjectPosition(Object *object, int x, int y) {
             }
             if (iter != obj_x_list_.begin()) {
                 obj_x_list_.insert(pos, object);
+                object->x_pos = --pos;
             } else {
                 obj_x_list_.push_front(object);
+                object->x_pos = obj_x_list_.begin();
             }
         }
     }
@@ -168,8 +172,10 @@ void Scene::UpdateObjectPosition(Object *object, int x, int y) {
             }
             if (iter != obj_y_list_.end()) {
                 obj_y_list_.insert(pos, object);
+                object->y_pos = --pos;
             } else {
                 obj_y_list_.push_back(object);
+                object->y_pos = --obj_y_list_.end();
             }
         }
     } else if (y < old_y) {
@@ -186,8 +192,10 @@ void Scene::UpdateObjectPosition(Object *object, int x, int y) {
             }
             if (iter != obj_y_list_.begin()) {
                 obj_y_list_.insert(pos, object);
+                object->y_pos = --pos;
             } else {
                 obj_y_list_.push_front(object);
+                object->y_pos = obj_y_list_.begin();
             }
         }
     }
